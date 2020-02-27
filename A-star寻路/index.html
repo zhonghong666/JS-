@@ -4,8 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A-star寻路</title>
+    <script src="./index.js"></script>
+    <style>
+        .btn{
+            position: absolute;
+            border-radius: 4px;
+            left: 47%;
+            margin-top: 10px;
+            border: none;
+        }
+        .btn:hover{
+            color: white;
+            background-color: #E21918;
+        }
+    </style>
 </head>
 <body>
-    
+    <div class="map"></div>
+    <button class="btn">开始寻路</button>
+    <script>
+        let el = document.querySelector('.map');
+        let map = new Map(el, 400, 400, 20);
+        map.setStart({
+            x: 5,
+            y: 5,
+            color: 'red'
+        });
+        map.setEnd({
+            x: 15,
+            y: 5,
+            color: 'green'
+        });
+        map.setBar([
+            {
+                x: 8,
+                y: 3,
+                color: 'blue'
+            },
+            {
+                x: 8,
+                y: 4,
+                color: 'blue'
+            },
+            {
+                x: 8,
+                y: 5,
+                color: 'blue'
+            }
+        ]);
+        map.render();
+        let btn = document.querySelector(".btn");
+        btn.addEventListener("click", () => {
+            openAdd(map);
+        })
+    </script>
 </body>
 </html>
