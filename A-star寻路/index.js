@@ -108,58 +108,137 @@ class Map{
     }
     //渲染地图
     render(){
-        console.log(this.data);
         this.setStyle();
-        this.openArr = [this.start];
-        this.closeArr = [...this.bar];
-        this.el.innerHTML = this.data.map(item => {
-            return `<span style="
-                position:absolute;
-                left:${item.x * this.rect}px;
-                top:${item.y * this.rect}px;
-                width:${this.rect}px;
-                height:${this.rect}px;
-                ${item.color?`background-color:`+item.color+';':''}
-                border: 1px solid black;
-                border-top: none;
-                border-left: none;"
-            ></span>`;
-        }).join('');
+        this.data.map(item => {
+            let span = document.createElement('span');
+            span.style.position = 'absolute';
+            span.style.left = item.x * this.rect + 'px';
+            span.style.top = item.y * this.rect + 'px';
+            span.style.width = this.rect + 'px';
+            span.style.height = this.rect + 'px';
+            if(item.color){
+                span.style.backgroundColor = item.color;
+            }
+            span.style.borderRight = '1px solid black';
+            span.style.borderBottom = '1px solid black';
+            this.el.appendChild(span);
+            switch(item.type){
+                case 'start':
+                    this.start = span;
+                    this.openArr.push(span);
+                    break;
+                case 'bar':
+                    this.closeArr.push(span);
+                    break;
+                case 'end':
+                    this.end = span;
+                    break;
+            }
+        });
     }
 }
 
-
+let openArr = null;
+let closeArr = null;
+let start = null;
+let end = null;
+let rect = null;
+let path = [];
 
 //估价函数 f(n) = g(n) + h(n)
 function f(node){
     return g(node) + h(node);
 }
 
-function g(node, start){
+function g(node){
     let a = node.offsetLeft - start.offsetLeft;
     let b = node.offsetTop - start.offsetTop;
     return Math.sqrt(a*a + b*b);
 }
 
-function h(node, end){
+function h(node){
     let a = node.offsetLeft - end.offsetLeft;
     let b = node.offsetTop - end.offsetTop;
     return Math.sqrt(a*a + b*b);
 }
+
 //向open队列添加元素
-function openAdd({openArr, closeArr, start}){
+let pv = 0;
+function openAdd(map){
+    if(pv == 0){
+        openArr = map.openArr;
+        closeArr = map.closeArr;
+        start = map.start;
+        end = map.end;
+        rect = map.rect;
+        pv++;
+    }
     let item = openArr.shift();
-    if(item == start){
+    if(item == end){
+        showPath();
         return;
     }
-    closeAdd(item, closeArr);
+    closeAdd(item);
     findNode(item);
+    openArr.sort((first, second) => {
+        return first.num - second.num;
+    })
+    openAdd(map);
 }
 //向close队列添加元素
-function closeAdd(node, closeArr){
+function closeAdd(node){
     closeArr.push(node);
 }
 
 function findNode(node){
+    let result = [];
+    let allSpan = document.querySelectorAll('span');
+    allSpan.forEach(item => {
+        if(filter(item)){
+            result.push(item);
+        }
+    })
+    result.forEach(item => {
+        if((Math.abs(node.offsetLeft - item.offsetLeft) <= (rect + 1)) && (Math.abs(node.offsetTop - item.offsetTop) <= (rect + 1))){
+            item.num = f(item);
+            item.parent = node;
+            openArr.push(item);
+        }
+    })
+}
 
+function filter(node){
+    for(let i = 0; i < openArr.length; i++){
+        if(node == openArr[i]){
+            return false;
+        }
+    }
+    for(let i = 0; i < closeArr.length; i++){
+        if(node == closeArr[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
+function findParent(node){
+    path.unshift(node);
+    console.log(path);
+    if(node.parent == undefined || node.parent == start){
+        return;
+    }
+    findParent(node.parent);
+}
+
+function showPath(){
+    let last = closeArr.pop();
+    let now = 0;
+    findParent(last);
+    let timer = setInterval(() => {
+        path[now].style.backgroundColor = 'red';
+        now++;
+        if(now == path.length){
+            clearInterval(timer);
+        }
+    }, 500);
 }
